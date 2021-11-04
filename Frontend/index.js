@@ -4,7 +4,9 @@ fetch("/res.json")
 .then(text => data = text);
 
 var frame = 0;
-var maxFrame = 50;
+var maxFrame = 1000;
+
+var playPauseStatus = true;
 
 setTimeout(main, 500);
 function main(){
@@ -14,6 +16,9 @@ function main(){
 
 function sim(){
     background(100);
+    if(playPauseStatus && frameCount % 2 == 0){
+        next();
+    }
     for(var key of Object.keys(data)){
         var object = data[key];
         var location = object["frames"][frame];
@@ -41,4 +46,9 @@ function back(){
     if(frame < 0){
         frame = maxFrame - 1;
     }
+}
+
+function playPause(){
+    playPauseStatus = !playPauseStatus;
+    document.getElementById("playPause").innerHTML = playPauseStatus ? "Pause" : "Play";
 }

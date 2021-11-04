@@ -2,35 +2,36 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include <stdlib.h>
 
-double dist(double x1, double y1, double x2, double y2)
+float dist(float x1, float y1, float x2, float y2)
 {
-    double x = x1 - x2;
-    double y = y1 - y2;
+    float x = x1 - x2;
+    float y = y1 - y2;
     return sqrt(pow(x, 2) + pow(y, 2));
 }
 
 class Body
 {
 public:
-    double x;
-    double y;
-    double xv;
-    double yv;
-    double mass;
-    std::vector<std::vector<double> > locations;
+    float x;
+    float y;
+    float xv;
+    float yv;
+    float mass;
+    std::vector<float> locations;
 
     void fall(Body other)
     {
-        double ox = other.x;
-        double oy = other.y;
-        double omass = other.mass;
+        float ox = other.x;
+        float oy = other.y;
+        float omass = other.mass;
 
-        double angle = atan2(ox - x, oy - y);
-        double force = (mass * omass) / pow(dist(ox, oy, x, y), 2);
+        float angle = atan2(oy - y, ox - x);
+        float force = (mass * omass) / pow(dist(ox, oy, x, y), 2);
 
-        double fx = cos(angle) * force;
-        double fy = sin(angle) * force;
+        float fx = cos(angle) * force;
+        float fy = sin(angle) * force;
 
         xv += fx;
         yv += fy;
@@ -39,10 +40,8 @@ public:
     {
         x += xv;
         y += yv;
-        std::vector<double> pos;
-        pos.push_back(x);
-        pos.push_back(y);
-        locations.push_back(pos);
+        locations.push_back(x);
+        locations.push_back(y);
     }
 };
 
@@ -51,23 +50,44 @@ Body body2 = Body();
 
 int main()
 {
-    int numBodies = 10;
+
+    int numBodies = 100;
     std::vector<Body> bodies;
-    for(int i = 0; i < numBodies; i++){
+    srand(1);
+    for (int i = 0; i < numBodies; i++)
+    {
         Body body = Body();
-        body.x = i * 100;
-        body.y = 400;
-        body.xv = 0;
-        body.yv = 0;
-        body.mass = 100;
+        body.x = rand() % 400 + 200;
+        body.y = rand() % 400 + 200;
+        body.xv = (rand() % 200) / 100 - 1;
+        body.yv = (rand() % 200) / 100 - 1;
+        body.mass = rand() % 25 + 12.5;
         bodies.push_back(body);
     }
 
-    int steps = 50;
-    for(int h = 0; h < steps; h++){
-        for(int i = 0; i < numBodies; i++){
-            for(int j = 0; j < numBodies; j++){
-                if(i != j){
+    int steps = 1000;
+
+    std::ofstream file;
+    file.open("../Res/res.txt", std::ostream::out | std::ofstream::trunc);
+
+    for (int i = 0; i < numBodies; i++)
+    {
+        std::string res = "";
+        res += "obj" + std::to_string(i) + "\n";
+        res += std::to_string(steps) + "\n";
+        res += "255,255,255\n";
+        res += "end\n";
+        file << res;
+    }
+
+    for (int h = 0; h < steps; h++)
+    {
+        for (int i = 0; i < numBodies; i++)
+        {
+            for (int j = 0; j < numBodies; j++)
+            {
+                if (i != j)
+                {
                     bodies[i].fall(bodies[j]);
                     bodies[j].fall(bodies[i]);
                     bodies[i].move();
@@ -75,21 +95,38 @@ int main()
                 }
             }
         }
+        bool mod150 = (h % 150) == 0;
+        if (mod150 && h != 0)
+        {
+            std::cout << mod150 << "\n";
+            for (int i = 0; i < numBodies; i++)
+            {
+
+                for (int j = 0; j < steps; j += 2)
+                {
+                    std::string res = "";
+                    float x = bodies[i].locations[j];
+                    float y = bodies[i].locations[j + 1];
+                    res += "obj" + std::to_string(i) + ":" + std::to_string(x) + "," + std::to_string(y) + "\n";
+                    file << res;
+                }
+                bodies[i].locations.clear();
+            }
+        }
+        std::cout << "Step " << h << " Done" << std::endl;
     }
     //write to text file
-    std::ofstream file;
-    file.open("../Res/res.txt");
-    for(int i = 0; i < numBodies; i++){
-        std::string res = "";
-        res += "obj"+std::to_string(i)+"\n";
-        res += std::to_string(steps)+"\n";
-        res += "255,255,255\n";
-        for(int j = 0; j < steps; j++){
-            std::vector<double> location = bodies[i].locations[j];
-            res += std::to_string(location[0]) + "," + std::to_string(location[1]) + "\n";
+    for (int i = 0; i < numBodies; i++)
+    {
+        for (int j = 0; j < steps * 2; j += 2)
+        {
+            std::string res = "";
+            float x = bodies[i].locations[j];
+            float y = bodies[i].locations[j + 1];
+            res += "obj" + std::to_string(i) + ":" + std::to_string(x) + "," + std::to_string(y) + "\n";
+            file << res;
         }
-        res += "end\n";
-        file<<res;
+        bodies[i].locations.clear();
     }
     file.close();
     return 0;

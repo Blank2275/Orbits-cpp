@@ -9,32 +9,32 @@ fs.readFile(inputFilePath, (err, data) => {
     data = data.toString();
     data = data.split("end\n");
     var output = {};
-    for(var object of data){
-        var lines = object.split("\n");
-        if(lines[2]){
-            var name = lines[0];
-            var frames = parseInt(lines[1]);
-            console.log(lines);
-            var color = lines[2].split(",");
+    for(section of data){
+        var lines = section.split("\n");
+        if(!lines[0].includes(":")){
+            output[`${lines[0]}`] = {};
+            output[`${lines[0]}`]["frameCount"] = parseInt(lines[1]);
+            color = lines[2].split(",");
             color[0] = parseInt(color[0]);
-            color[1] = parseInt(color[0]);
-            color[2] = parseInt(color[0]);
-            var locations = [];
-            for(var i = 3; i < lines.length; i++){
-                var location = lines[i].split(",");
-                var x = parseFloat(location[0]);
-                var y = parseFloat(location[1]);
-                locations.push([x, y]);
-            }
-            output[`${name}`] = {
-                "frameCount": frames,
-                "color": color,
-                "frames": locations
+            color[1] = parseInt(color[1]);
+            color[2] = parseInt(color[2]);
+            output[`${lines[0]}`]["color"] = parseInt(color);
+            output[`${lines[0]}`]["frames"] = [];
+        } else{
+            for(var line of lines){
+                var parts = line.split(":");
+                if(parts[1]){
+                    var id = parts[0];
+                    var pos = parts[1].split(",");
+                    var x = parseFloat(pos[0]);
+                    var y = parseFloat(pos[1]);
+                    output[`${id}`]["frames"].push([x, y]);
+                }
             }
         }
     }
+
     var outputString = JSON.stringify(output);
-    console.log(outputString);
     fs.writeFile(outputFilePath, outputString, (err) => {
     });
 });
